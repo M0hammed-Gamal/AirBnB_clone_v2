@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # Fabfile to delete out-of-date archives.
 import os
-from invoke import task
+from invoke import task, lcd, cd, run
 
 env.hosts = ["54.157.152.98", "54.236.46.122"]
 
-
+@task
 def do_clean(number=0):
     """Delete out-of-date archives.
     Args:
@@ -26,3 +26,4 @@ def do_clean(number=0):
         archives = [a for a in archives if "web_static_" in a]
         [archives.pop() for i in range(number)]
         [run("rm -rf ./{}".format(a)) for a in archives]
+
