@@ -1,10 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 Fabric script that distributes an archive to your web servers
 """
 
 from datetime import datetime
-from fabric.api import *
+from invoke import task, run  # Change 'local' to 'run'
 import os
 
 env.hosts = ["54.157.152.98", "54.236.46.122"]
