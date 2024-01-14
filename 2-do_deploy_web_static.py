@@ -1,39 +1,57 @@
 #!/usr/bin/python3
 """
-Fabric script that distributes an archive to your web servers
+a Fabric script that generates a .tgz archive
+from the contents of the web_static folder of the AirBnB Clone repo
 """
-
-from datetime import datetime
+from fabric.operations import local, put, run
+from datetime import datetime as d
 from fabric.api import *
-import os
 
-env.hosts = ["54.157.152.98", "54.236.46.122"]
-env.user = "ubuntu"
+env.hosts = ['54.157.152.98', '54.236.46.122']
 
 
 def do_pack():
-    """
-        return the archive path if archive has generated correctly.
-    """
-
-    local("mkdir -p versions")
-    date = datetime.now().strftime("%Y%m%d%H%M%S")
-    archived_f_path = "versions/web_static_{}.tgz".format(date)
-    t_gzip_archive = local("tar -cvzf {} web_static".format(archived_f_path))
-
-    if t_gzip_archive.succeeded:
-        return archived_f_path
+    """ generates a .tgz archive """
+    name = "versions/web_static_" + str(d.now().year)
+    name += str(d.now().month) + str(d.now().day) + str(d.now().hour)
+    name += str(d.now().minute) + str(d.now().second) + ".tgz"
+    result = local("mkdir -p versions; tar -cvzf \"%s\" web_static" % name)
+    if result.failed:
+        return NULL
     else:
-        return None
+        return name
 
 
 def do_deploy(archive_path):
-    """
-        Distribute archive.
-    """
-    if os.path.exists(archive_path):
-        archived_file = archive_path[9:]
-        newest_version = "/data/web_static/releases/" + archived_file[:-4]
-        archived_file = "/tmp/" + archived_file
-        
-
+    """ uploads the archive to servers """
+    destination = "/tmp/" + archive_path.split("/")[-1]
+    result = put(archive_path, "/tmp/")
+    if result.failed:
+        return False
+    filename = archive_path.split("/")[-1]
+    f = filename.split(".")[0]
+    directory = "/data/web_static/releases/" + f
+    run_res = run("mkdir -p \"%s\"" % directory)
+    if run_res.failed:
+        return False
+    run_res = run("tar -xzf %s -C %s" % (destination, directory))
+    if run_res.failed:
+        return False
+    run_res = run("rm %s" % destination)
+    if run_res:
+        return False
+    web = directory + "/web_static/*"
+    run_res = run("mv %s %s" % (web, directory))
+    if run_res.failed:
+        return False
+    web = web[0:-2]
+    run_res = run("rm -rf %s" % web)
+    if run_res.failed:
+        return False
+    run_res = run("rm -rf /data/web_static/current")
+    if run_res.failed:
+        return False
+    run_res = run("ln -s %s /data/web_static/current" % directory)
+    if run_res.failed:
+        return False
+    return True
