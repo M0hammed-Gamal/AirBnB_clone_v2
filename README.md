@@ -15,7 +15,6 @@ The console is the first segment of the AirBnB project at ALX SOftware Engineeri
 * [Usage](#usage)
 * [Examples of use](#examples-of-use)
 * [Bugs](#bugs)
-* [Authors](#authors)
 * [License](#license)
 
 ## Environment
